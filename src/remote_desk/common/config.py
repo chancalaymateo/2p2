@@ -46,6 +46,9 @@ class AppConfig:
     agent_require_consent: bool = True
     max_auth_attempts: int = 5
     auth_lockout_seconds: int = 60
+    # Repositorio "usuario/repo" desde donde se revisan actualizaciones.
+    github_repo: str = "chancalaymateo/2p2"
+    update_check_enabled: bool = True
     ice: IceConfig = field(default_factory=IceConfig)
 
     @classmethod
@@ -59,5 +62,7 @@ class AppConfig:
             agent_require_consent=os.getenv("AGENT_REQUIRE_CONSENT", "true").lower() == "true",
             max_auth_attempts=int(os.getenv("MAX_AUTH_ATTEMPTS", "5")),
             auth_lockout_seconds=int(os.getenv("AUTH_LOCKOUT_SECONDS", "60")),
+            github_repo=os.getenv("GITHUB_REPO", "chancalaymateo/2p2"),
+            update_check_enabled=os.getenv("UPDATE_CHECK_ENABLED", "true").lower() == "true",
             ice=IceConfig.from_env(),
         )

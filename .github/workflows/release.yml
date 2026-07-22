@@ -1,0 +1,46 @@
+name: Build y Release
+
+# Cada push a main compila el .exe y publica una version nueva.
+# La app instalada detecta esa Release y ofrece actualizar (pop-up).
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # crear la Release y subir el .exe
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Calcular version (0.1.<run_number>)
+        id: ver
+        shell: pwsh
+        run: |
+          $version = "0.1.$env:GITHUB_RUN_NUMBER"
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          # Inyecta la version en el paquete para que el .exe conozca la suya.
+          "__version__ = `"$version`"" | Out-File -Encoding utf8 src/remote_desk/_version.py
+          Write-Host "Version: $version"
+
+      - name: Instalar dependencias y compilar
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[build]"
+          pyinstaller packaging/RemoteDesk.spec --noconfirm --clean
+
+      - name: Publicar Release con RemoteDesk.exe
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.ver.outputs.version }}
+          name: Remote-Desk v${{ steps.ver.outputs.version }}
+          files: dist/RemoteDesk.exe
+          generate_release_notes: true

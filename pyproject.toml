@@ -35,8 +35,14 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.23.0",
 ]
+build = [
+    "pyinstaller>=6.6.0",
+]
 
 [project.scripts]
+# App unificada de escritorio (ejecutable principal).
+remote-desk = "remote_desk.app.__main__:main"
+# Componentes individuales (utiles en desarrollo / servidor headless).
 remote-desk-server = "remote_desk.server.__main__:main"
 remote-desk-agent = "remote_desk.agent.__main__:main"
 remote-desk-controller = "remote_desk.controller.__main__:main"

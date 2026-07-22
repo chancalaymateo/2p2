@@ -11,13 +11,12 @@ Flujo:
 
 from __future__ import annotations
 
-import asyncio
+from collections.abc import Awaitable, Callable
 
 import websockets
-from aiortc import RTCIceCandidate, RTCPeerConnection, RTCSessionDescription
+from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.signaling import candidate_from_sdp, candidate_to_sdp
 
-from remote_desk.common import protocol
 from remote_desk.common.config import AppConfig
 from remote_desk.common.logging import setup_logging
 from remote_desk.common.protocol import Signal, make, parse
@@ -29,10 +28,32 @@ from .input_controller import InputController
 
 log = setup_logging("agent.connection")
 
+# Firmas de los callbacks que permiten usar el agente desde consola o GUI.
+CredentialsCallback = Callable[[str, str], None]  # (agent_id, password)
+ConsentProvider = Callable[[str], Awaitable[bool]]  # (controller_ip) -> autorizado
+StatusCallback = Callable[[str], None]
+
 
 class AgentClient:
-    def __init__(self, config: AppConfig) -> None:
+    """Cliente del agente.
+
+    Es agnostico de la interfaz: recibe callbacks para mostrar credenciales,
+    pedir consentimiento y reportar estado. Por defecto usa la consola, de modo
+    que `python -m remote_desk.agent` sigue funcionando; la GUI inyecta los suyos.
+    """
+
+    def __init__(
+        self,
+        config: AppConfig,
+        *,
+        on_credentials: CredentialsCallback | None = None,
+        consent_provider: ConsentProvider | None = None,
+        on_status: StatusCallback | None = None,
+    ) -> None:
         self.config = config
+        self._on_credentials = on_credentials or self._print_credentials
+        self._consent = consent_provider or self._console_consent
+        self._on_status = on_status or (lambda _s: None)
         self._ws: websockets.WebSocketClientProtocol | None = None
         self._pc: RTCPeerConnection | None = None
         self._screen: ScreenTrack | None = None
@@ -54,7 +75,8 @@ class AgentClient:
         mtype = msg["type"]
 
         if mtype == Signal.AGENT_REGISTERED:
-            self._print_credentials(msg["agent_id"], msg["password"])
+            self._on_credentials(msg["agent_id"], msg["password"])
+            self._on_status("Esperando conexiones...")
 
         elif mtype == Signal.INCOMING_CONNECTION:
             await self._on_incoming(msg)
@@ -77,7 +99,10 @@ class AgentClient:
         token = msg["token"]
         controller_ip = msg.get("controller_ip", "?")
 
-        granted = await ask_consent(controller_ip, self.config.agent_require_consent)
+        if self.config.agent_require_consent:
+            granted = await self._consent(controller_ip)
+        else:
+            granted = True
         assert self._ws is not None
         if not granted:
             await self._ws.send(make(Signal.REJECT_CONNECTION, token=token))
@@ -125,7 +150,10 @@ class AgentClient:
         @pc.on("connectionstatechange")
         async def _on_state() -> None:  # noqa: ANN202
             log.info("estado WebRTC: %s", pc.connectionState)
-            if pc.connectionState in ("failed", "closed", "disconnected"):
+            if pc.connectionState == "connected":
+                self._on_status("Alguien esta controlando este equipo")
+            elif pc.connectionState in ("failed", "closed", "disconnected"):
+                self._on_status("Esperando conexiones...")
                 await self._teardown()
 
         # 3) Generamos y enviamos la OFFER.
@@ -168,6 +196,9 @@ class AgentClient:
             self._pc = None
         self._token = None
         log.info("sesion cerrada; el agente sigue disponible para nuevas conexiones")
+
+    async def _console_consent(self, controller_ip: str) -> bool:
+        return await ask_consent(controller_ip, require_consent=True)
 
     def _print_credentials(self, agent_id: str, password: str) -> None:
         banner = (
