@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "remote-desk"
+version = "0.1.0"
+description = "Sistema de control remoto de escritorio (estilo TeamViewer/RustDesk) en Python puro: WebRTC + señalización + agente Windows."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Mateo" }]
+
+dependencies = [
+    # --- Transporte WebRTC (media cifrada + data channels) ---
+    "aiortc>=1.9.0",
+    "av>=12.0.0",
+    # --- Captura de pantalla del agente ---
+    "mss>=9.0.1",
+    "numpy>=1.26.0",
+    # --- Inyeccion de input (mouse/teclado) en el agente ---
+    "pynput>=1.7.7",
+    # --- Servidor de senalizacion ---
+    "websockets>=12.0",
+    # --- GUI del controlador ---
+    "PySide6>=6.7.0",
+    "qasync>=0.27.1",
+    # --- Utilidades ---
+    "python-dotenv>=1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "ruff>=0.5.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+]
+
+[project.scripts]
+remote-desk-server = "remote_desk.server.__main__:main"
+remote-desk-agent = "remote_desk.agent.__main__:main"
+remote-desk-controller = "remote_desk.controller.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
