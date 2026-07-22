@@ -75,10 +75,14 @@ class SignalingServer:
     async def _on_register_agent(
         self, ws: WebSocketServerProtocol, peer: str, msg: dict
     ) -> None:
-        display_id = crypto.generate_agent_id()
-        agent_id = crypto.normalize_id(display_id)
-        password = crypto.generate_password()
-        salt_hex, hash_hex = crypto.hash_password(password)
+        # El agente propone su ID persistente y su identidad de dispositivo,
+        # ademas del (salt, hash) de su clave. El servidor garantiza la unicidad.
+        device_uuid = str(msg.get("device_uuid", ""))
+        salt_hex = str(msg.get("salt", ""))
+        hash_hex = str(msg.get("hash", ""))
+        desired = crypto.normalize_id(str(msg.get("desired_id", "")))
+
+        display_id, agent_id = self._grant_unique_id(desired, device_uuid)
 
         self.registry.add_agent(
             Agent(
@@ -87,13 +91,32 @@ class SignalingServer:
                 ws=ws,
                 salt_hex=salt_hex,
                 hash_hex=hash_hex,
+                device_uuid=device_uuid,
             )
         )
         log.info("agente registrado: %s", display_id)
-        # La clave en texto plano solo viaja aqui (por wss) para mostrarse.
-        await self._send(
-            ws, Signal.AGENT_REGISTERED, agent_id=display_id, password=password
-        )
+        # Devolvemos el ID concedido (puede diferir del deseado si hubo colision).
+        await self._send(ws, Signal.AGENT_REGISTERED, agent_id=display_id)
+
+    def _grant_unique_id(self, desired: str, device_uuid: str) -> tuple[str, str]:
+        """Concede un ID unico entre los agentes conectados.
+
+        Respeta el ID deseado si esta libre o pertenece al mismo dispositivo;
+        de lo contrario genera uno nuevo garantizado unico. Devuelve (display, norm).
+        """
+        def fmt(norm: str) -> str:
+            return f"{norm[0:3]} {norm[3:6]} {norm[6:9]}"
+
+        if desired and len(desired) == 9:
+            existing = self.registry.get_agent(desired)
+            if existing is None or existing.device_uuid == device_uuid:
+                return fmt(desired), desired
+
+        # Colision (o sin ID deseado): asignamos uno nuevo libre.
+        while True:
+            candidate = crypto.normalize_id(crypto.generate_agent_id())
+            if self.registry.get_agent(candidate) is None:
+                return fmt(candidate), candidate
 
     async def _on_connect_request(
         self, ws: WebSocketServerProtocol, peer: str, msg: dict

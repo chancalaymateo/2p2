@@ -17,6 +17,7 @@ class Agent:
     ws: WebSocketServerProtocol
     salt_hex: str
     hash_hex: str
+    device_uuid: str = ""  # identifica el dispositivo (permite reclamar su ID)
 
 
 @dataclass

@@ -17,7 +17,9 @@ import websockets
 from aiortc import RTCPeerConnection, RTCSessionDescription
 from aiortc.contrib.signaling import candidate_from_sdp, candidate_to_sdp
 
+from remote_desk.common import identity as identity_mod
 from remote_desk.common.config import AppConfig
+from remote_desk.common.identity import Identity
 from remote_desk.common.logging import setup_logging
 from remote_desk.common.protocol import Signal, make, parse
 from remote_desk.common.webrtc import build_ice_servers
@@ -46,11 +48,13 @@ class AgentClient:
         self,
         config: AppConfig,
         *,
+        identity: Identity | None = None,
         on_credentials: CredentialsCallback | None = None,
         consent_provider: ConsentProvider | None = None,
         on_status: StatusCallback | None = None,
     ) -> None:
         self.config = config
+        self._identity = identity or identity_mod.load_or_create()
         self._on_credentials = on_credentials or self._print_credentials
         self._consent = consent_provider or self._console_consent
         self._on_status = on_status or (lambda _s: None)
@@ -63,7 +67,16 @@ class AgentClient:
         log.info("conectando al servidor %s ...", self.config.signaling_url)
         async with websockets.connect(self.config.signaling_url, max_size=2**20) as ws:
             self._ws = ws
-            await ws.send(make(Signal.REGISTER_AGENT))
+            salt_hex, hash_hex = self._identity.credentials_hash()
+            await ws.send(
+                make(
+                    Signal.REGISTER_AGENT,
+                    desired_id=self._identity.id,
+                    device_uuid=self._identity.device_uuid,
+                    salt=salt_hex,
+                    hash=hash_hex,
+                )
+            )
             async for raw in ws:
                 try:
                     msg = parse(raw)
@@ -75,7 +88,9 @@ class AgentClient:
         mtype = msg["type"]
 
         if mtype == Signal.AGENT_REGISTERED:
-            self._on_credentials(msg["agent_id"], msg["password"])
+            # El servidor confirma (o reasigna) nuestro ID; la clave es local.
+            identity_mod.set_granted_id(self._identity, msg["agent_id"])
+            self._on_credentials(self._identity.id, self._identity.password)
             self._on_status("Esperando conexiones...")
 
         elif mtype == Signal.INCOMING_CONNECTION:
