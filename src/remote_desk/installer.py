@@ -18,8 +18,8 @@ import sys
 import time
 from pathlib import Path
 
-APP_NAME = "RemoteDesk"
-DISPLAY_NAME = "Remote-Desk"
+APP_NAME = "2p2"
+DISPLAY_NAME = "2p2"
 
 # Evita que las llamadas a PowerShell abran ventanas de consola.
 _NO_WINDOW = 0x08000000  # CREATE_NO_WINDOW

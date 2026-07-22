@@ -121,11 +121,11 @@ El usuario final **no instala Python ni dependencias**: todo va dentro del `.exe
 .\scripts\build.ps1
 ```
 
-Genera **`dist\RemoteDesk.exe`** — un único archivo autocontenido (PyInstaller
+Genera **`dist\2p2.exe`** — un único archivo autocontenido (PyInstaller
 onefile) que es **a la vez la app y su instalador**:
 
 - Al ejecutarlo desde cualquier carpeta (Descargas, USB…), pregunta si instalarlo.
-  Al aceptar, se copia a `%LOCALAPPDATA%\Programs\RemoteDesk`, crea accesos
+  Al aceptar, se copia a `%LOCALAPPDATA%\Programs\2p2`, crea accesos
   directos en menú inicio y escritorio, y se relanza desde ahí. **Sin permisos de
   administrador.**
 - Modos de línea de comandos: `--install` (instala en silencio), `--portable`
@@ -138,7 +138,7 @@ Es exportable: copia ese `.exe` a cualquier máquina Windows y funciona.
 1. `GITHUB_REPO` ya apunta a tu repo (`chancalaymateo/2p2`).
 2. **Cada push a `main`**, GitHub Actions (`.github/workflows/release.yml`)
    compila el `.exe`, calcula la versión `0.1.<nº de build>` y publica una
-   **Release** con `RemoteDesk.exe` adjunto.
+   **Release** con `2p2.exe` adjunto.
 3. Al abrir la app instalada, esta consulta la última Release; si hay una versión
    mayor que la suya, muestra un **pop-up "Actualización disponible"**. Al aceptar,
    descarga el nuevo `.exe`, reemplaza el instalado en caliente y se reinicia.

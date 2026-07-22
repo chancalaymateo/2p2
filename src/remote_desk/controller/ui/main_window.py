@@ -15,7 +15,7 @@ from .controller_panel import ControllerPanel
 class MainWindow(QMainWindow):
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
-        self.setWindowTitle("Remote-Desk  ·  Controlador")
+        self.setWindowTitle("2p2  ·  Controlador")
         self.resize(1100, 720)
         self.panel = ControllerPanel(config)
         self.setCentralWidget(self.panel)

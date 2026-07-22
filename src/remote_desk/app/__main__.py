@@ -61,8 +61,8 @@ def _maybe_self_install(app: QApplication) -> bool:
 
     box = QMessageBox()
     box.setIcon(QMessageBox.Icon.Question)
-    box.setWindowTitle("Instalar Remote-Desk")
-    box.setText("¿Instalar Remote-Desk en este equipo?")
+    box.setWindowTitle("Instalar 2p2")
+    box.setText("¿Instalar 2p2 en este equipo?")
     box.setInformativeText(
         "Se copiara a tu carpeta de usuario y se crearan accesos directos en el "
         "menu inicio y el escritorio. No requiere permisos de administrador."
@@ -106,7 +106,7 @@ def main() -> None:
     config = AppConfig.load()
 
     app = QApplication(sys.argv)
-    app.setApplicationName("Remote-Desk")
+    app.setApplicationName("2p2")
     apply_theme(app)
 
     # Primer arranque del portable: ofrecer instalar y relanzar.

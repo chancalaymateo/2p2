@@ -50,7 +50,7 @@ exe = EXE(
     a.binaries,
     a.datas,
     [],
-    name="RemoteDesk",
+    name="2p2",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

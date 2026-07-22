@@ -22,7 +22,7 @@ Write-Host "==> Version: $Version" -ForegroundColor Cyan
 Write-Host "==> Empaquetando con PyInstaller (onefile)..." -ForegroundColor Cyan
 pyinstaller packaging/RemoteDesk.spec --noconfirm --clean
 
-Write-Host "==> Ejecutable listo: dist\RemoteDesk.exe (un solo archivo)" -ForegroundColor Green
+Write-Host "==> Ejecutable listo: dist\2p2.exe (un solo archivo)" -ForegroundColor Green
 
 # --- Instalador con Inno Setup (opcional) ---
 $Iscc = Get-Command "ISCC.exe" -ErrorAction SilentlyContinue

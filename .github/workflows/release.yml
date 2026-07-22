@@ -37,10 +37,10 @@ jobs:
           pip install -e ".[build]"
           pyinstaller packaging/RemoteDesk.spec --noconfirm --clean
 
-      - name: Publicar Release con RemoteDesk.exe
+      - name: Publicar Release con 2p2.exe
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ steps.ver.outputs.version }}
-          name: Remote-Desk v${{ steps.ver.outputs.version }}
-          files: dist/RemoteDesk.exe
+          name: 2p2 v${{ steps.ver.outputs.version }}
+          files: dist/2p2.exe
           generate_release_notes: true

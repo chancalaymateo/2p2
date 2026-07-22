@@ -33,7 +33,7 @@ class HomeWindow(QWidget):
     def __init__(self, config: AppConfig) -> None:
         super().__init__()
         self.config = config
-        self.setWindowTitle("Remote-Desk")
+        self.setWindowTitle("2p2")
         self.resize(960, 660)
         self.setStyleSheet(f"background:{BG};")
 
@@ -59,9 +59,9 @@ class HomeWindow(QWidget):
         outer.setSpacing(0)
 
         # Encabezado (alineado a la izquierda, sobrio).
-        brand = QLabel("REMOTE-DESK")
+        brand = QLabel("2p2")
         brand.setStyleSheet(
-            f"color:{TEXT}; font-size:22px; font-weight:600; letter-spacing:4px;"
+            f"color:{TEXT}; font-size:28px; font-weight:700; letter-spacing:2px;"
         )
         outer.addWidget(brand)
 
